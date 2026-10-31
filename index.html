@@ -45,6 +45,26 @@ h2{font:600 1.35rem/1.2 Georgia,"Times New Roman",serif}
 .legend b{width:9px;height:9px;border-radius:50%;flex:none}
 .legend span{color:var(--mute);margin-left:auto}
 .mins{font-size:.78rem;color:var(--mute);margin-top:-6px}
+.t-head{all:unset;box-sizing:border-box;display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;border-radius:12px}
+.t-head:focus-visible{outline:2px solid #00e5ff;outline-offset:4px}
+.chev{color:var(--mute);transition:transform .3s ease;flex:none}
+.time.open .chev{transform:rotate(180deg)}
+.time:not(.open){padding:14px 18px}
+.time:not(.open) .big{font-size:1.45rem}
+.time:not(.open) .sub{display:none}
+.peek{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:.85rem;color:var(--mute)}
+.peek b{color:var(--ink);font-weight:600}
+.peek .dot{display:inline-flex;align-items:center;gap:6px}
+.peek .dot i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.time.open .peek{display:none}
+.peek .apps{display:inline-flex;gap:12px}
+@media (max-width:520px){.legend{grid-template-columns:1fr}}
+.time:not(.open) .bar{margin:10px 0 0;height:5px}
+.more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s ease}
+.more>div{overflow:hidden;min-height:0}
+.time.open .more{grid-template-rows:1fr}
+.time .seg{margin:4px 0 14px}
+@media (prefers-reduced-motion:reduce){.more,.chev{transition:none}}
 footer{margin-top:48px;color:var(--mute);font-size:.8rem}
 @media (prefers-reduced-motion:reduce){a.app{transition:none}a.app:hover{transform:none}}
 </style>
@@ -55,11 +75,17 @@ footer{margin-top:48px;color:var(--mute);font-size:.8rem}
  <h1>Apps for learning by seeing</h1>
  <p class="l">Small, visual tools I build to understand math, psychology and statistics.</p>
 </header>
-<section class="time" aria-label="Study time">
- <div class="row1"><div><div class="k">Time studied</div><div class="big" id="t-total">0 min</div><div class="sub" id="t-note">Across Numina, Anima and Psygma</div></div>
- <div class="seg" role="group" aria-label="Period"><button data-p="today" aria-pressed="false">Today</button><button data-p="week" aria-pressed="false">This week</button><button data-p="all" aria-pressed="true">All time</button></div></div>
+<section class="time" id="t-sec" aria-label="Study time">
+ <button class="t-head" id="t-tog" aria-expanded="false" aria-controls="t-more">
+  <div><div class="k">Time studied</div><div class="big" id="t-total">0 min</div><div class="sub" id="t-note">All time · Numina, Anima and Psygma</div></div>
+  <svg class="chev" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+ </button>
+ <div class="peek" id="t-peek"></div>
  <div class="bar" id="t-bar"></div>
- <div class="legend" id="t-legend"></div>
+ <div class="more" id="t-more"><div>
+  <div class="seg" role="group" aria-label="Period"><button data-p="today" aria-pressed="false">Today</button><button data-p="week" aria-pressed="false">This week</button><button data-p="all" aria-pressed="true">All time</button></div>
+  <div class="legend" id="t-legend"></div>
+ </div></div>
 </section>
 <main>
  <a class="app" href="./Numina/" style="--glow:#00e5ff">
@@ -88,22 +114,29 @@ footer{margin-top:48px;color:var(--mute);font-size:.8rem}
 (function(){
 var APPS=[["numina","Numina","#00e5ff"],["anima","Anima","#c9a2ff"],["psygma","Psygma","#ffb21e"]];
 var URL_="https://etyimgbooxvqejkjhfyo.supabase.co",KEY="sb_publishable_PhzsifRX21bl1JX_1NXMCA_0kB-q6xB";
-var period="all",data={};
+var period="all",data={},synced=false,sec=document.getElementById("t-sec");
+try{if(localStorage.getItem("hub.timeOpen")==="1")sec.classList.add("open")}catch(e){}
+var tog=document.getElementById("t-tog");tog.setAttribute("aria-expanded",sec.classList.contains("open"));
+tog.onclick=function(){var o=sec.classList.toggle("open");tog.setAttribute("aria-expanded",o);try{localStorage.setItem("hub.timeOpen",o?"1":"0")}catch(e){}render()};
 function j(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function merge(a,b){var o={devices:{}};[a,b].forEach(function(x){if(!x||!x.devices)return;for(var d in x.devices){var days=(x.devices[d]||{}).days||{};var t=o.devices[d]||(o.devices[d]={days:{}});for(var k in days){var v=+days[k]||0;if(!(t.days[k]>=v))t.days[k]=v}}});return o}
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
-function inPeriod(k){if(period==="all")return true;var now=new Date();if(period==="today")return k===ymd(now);var m=new Date(now);m.setDate(now.getDate()-((now.getDay()+6)%7));return k>=ymd(m)&&k<=ymd(now)}
-function secs(x){var s=0;if(!x)return 0;for(var d in x.devices){var days=x.devices[d].days;for(var k in days)if(inPeriod(k))s+=+days[k]||0}return s}
+function inPeriod(k,p){p=p||period;if(p==="all")return true;var now=new Date();if(p==="today")return k===ymd(now);var m=new Date(now);m.setDate(now.getDate()-((now.getDay()+6)%7));return k>=ymd(m)&&k<=ymd(now)}
+function secs(x,p){var s=0;if(!x)return 0;for(var d in x.devices){var days=x.devices[d].days;for(var k in days)if(inPeriod(k,p))s+=+days[k]||0}return s}
+function sh(s){var m=Math.floor(s/60),h=Math.floor(m/60);m%=60;return h?h+'h'+(m?' '+m+'m':''):(m||(s>0?'<1':0))+'m'}
 function fmt(s){var m=Math.floor(s/60),h=Math.floor(m/60);m%=60;return h?h+" h "+(m?m+" min":""):(m||(s>0?"<1":0))+" min"}
-function render(){var tot=0,per=APPS.map(function(a){var v=secs(data[a[0]]);tot+=v;return v});
+function sum(p){return APPS.reduce(function(t,a){return t+secs(data[a[0]],p)},0)}
+function render(){var open=sec.classList.contains("open"),all=sum("all"),tot=0,per=APPS.map(function(a){var v=secs(data[a[0]],open?period:"all");tot+=v;return v});
 document.getElementById("t-total").textContent=fmt(tot);
+document.getElementById("t-note").textContent=(period==="all"?"All time":period==="today"?"Today":"This week")+" · Numina, Anima and Psygma"+(synced?" · synced":"");
+document.getElementById("t-peek").innerHTML='<span>Today <b>'+sh(sum("today"))+'</b></span><span class="apps">'+APPS.map(function(a){return '<span class="dot" title="'+a[1]+'"><i style="background:'+a[2]+'"></i>'+sh(secs(data[a[0]],"all"))+'</span>'}).join("")+'</span>';
 document.getElementById("t-bar").innerHTML=APPS.map(function(a,i){return '<i style="background:'+a[2]+';width:'+(tot?per[i]/tot*100:0)+'%"></i>'}).join("");
 document.getElementById("t-legend").innerHTML=APPS.map(function(a,i){return '<div><b style="background:'+a[2]+'"></b>'+a[1]+'<span>'+fmt(per[i])+'</span></div>'}).join("");
 APPS.forEach(function(a,i){var el=document.querySelector('.mins[data-app="'+a[0]+'"]');if(el)el.textContent=per[i]?fmt(per[i])+(period==="all"?" studied":period==="today"?" today":" this week"):""});
 document.querySelectorAll(".seg button").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.p===period)})}
 function loadLocal(){APPS.forEach(function(a){data[a[0]]=merge(data[a[0]],j("studytime."+a[0]))})}
 function token(){var best=null;try{for(var i=0;i<localStorage.length;i++){var v=j(localStorage.key(i));if(v&&typeof v==="object"){var s=v.currentSession||v.session||v;if(s&&s.access_token){var exp=s.expires_at>1e12?s.expires_at:(s.expires_at||0)*1000;if(exp>Date.now()+30000&&(!best||exp>best.exp))best={t:s.access_token,exp:exp}}}}}catch(e){}return best&&best.t}
-function loadCloud(){var t=token();if(!t)return;document.getElementById("t-note").textContent="Across Numina, Anima and Psygma · synced";
+function loadCloud(){var t=token();if(!t)return;synced=true;
 fetch(URL_+"/auth/v1/user",{headers:{apikey:KEY,Authorization:"Bearer "+t}}).then(function(r){return r.ok?r.json():null}).then(function(u){if(!u)return;var md=u.user_metadata||{};APPS.forEach(function(a){var c=md[a[0]+"_studytime"];if(typeof c==="string"){try{c=JSON.parse(c)}catch(e){c=null}}data[a[0]]=merge(data[a[0]],c)});render()}).catch(function(){})}
 document.querySelectorAll(".seg button").forEach(function(b){b.onclick=function(){period=b.dataset.p;render()}});
 loadLocal();render();loadCloud();

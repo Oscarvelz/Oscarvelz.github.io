@@ -1,5 +1,5 @@
 // Home page only. Never touches the apps (/Numina/, /Anima/, /Psygma/, ...) or Supabase.
-const C='home-4';const OWN=['./','./index.html','./manifest.webmanifest','./icon2-192.png','./icon2-512.png','./maskable2-512.png','./icon2-180.png','./numina-icon.png','./anima-icon.png','./sigmind-icon.png'];
+const C='home-5';const OWN=['./','./index.html','./manifest.webmanifest','./icon2-192.png','./icon2-512.png','./maskable2-512.png','./icon2-180.png','./numina-icon.png','./anima-icon.png','./sigmind-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(OWN)));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x.startsWith('home-')&&x!==C).map(x=>caches.delete(x)))));self.clients.claim();});
 self.addEventListener('fetch',e=>{const q=e.request;if(q.method!=='GET')return;const u=new URL(q.url);
