@@ -6,7 +6,9 @@
 <title>Oscar Velasquez · Apps</title>
 <meta name="description" content="Learning apps by Oscar Velasquez: Numina, Anima and Sigmind.">
 <meta name="theme-color" content="#0b0d12">
-<link rel="icon" href="numina-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
 <style>
 :root{--bg:#0b0d12;--ink:#eef0f5;--mute:#9aa2b4;--line:rgba(255,255,255,.09);--card:rgba(255,255,255,.035)}
 *{box-sizing:border-box;margin:0}
@@ -57,5 +59,6 @@ footer{margin-top:48px;color:var(--mute);font-size:.8rem}
  </a>
 </main>
 <footer>oscarvelz.github.io</footer>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("./sw.js",{scope:"./"});</script>
 </body>
 </html>
