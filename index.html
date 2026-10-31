@@ -31,6 +31,20 @@ h2{font:600 1.35rem/1.2 Georgia,"Times New Roman",serif}
 .tag{font-size:.75rem;color:var(--mute);letter-spacing:.06em}
 .d{color:#c9cedb;font-size:.95rem}
 .go{margin-top:auto;font-size:.85rem;color:var(--glow);letter-spacing:.04em}
+.time{width:100%;max-width:1040px;margin:0 0 22px;padding:20px 22px;border:1px solid var(--line);border-radius:20px;background:var(--card)}
+.time .row1{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.time .big{font:600 clamp(1.7rem,5vw,2.4rem)/1.1 Georgia,"Times New Roman",serif}
+.time .sub{color:var(--mute);font-size:.85rem}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{background:none;border:0;color:var(--mute);font:inherit;font-size:.8rem;padding:6px 12px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed=true]{background:rgba(255,255,255,.09);color:var(--ink)}
+.bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.06);margin:16px 0 12px}
+.bar i{display:block;height:100%;transition:width .5s ease}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.legend div{display:flex;align-items:center;gap:8px;font-size:.9rem}
+.legend b{width:9px;height:9px;border-radius:50%;flex:none}
+.legend span{color:var(--mute);margin-left:auto}
+.mins{font-size:.78rem;color:var(--mute);margin-top:-6px}
 footer{margin-top:48px;color:var(--mute);font-size:.8rem}
 @media (prefers-reduced-motion:reduce){a.app{transition:none}a.app:hover{transform:none}}
 </style>
@@ -41,25 +55,60 @@ footer{margin-top:48px;color:var(--mute);font-size:.8rem}
  <h1>Apps for learning by seeing</h1>
  <p class="l">Small, visual tools I build to understand math, psychology and statistics.</p>
 </header>
+<section class="time" aria-label="Study time">
+ <div class="row1"><div><div class="k">Time studied</div><div class="big" id="t-total">0 min</div><div class="sub" id="t-note">Across Numina, Anima and Psygma</div></div>
+ <div class="seg" role="group" aria-label="Period"><button data-p="today" aria-pressed="false">Today</button><button data-p="week" aria-pressed="false">This week</button><button data-p="all" aria-pressed="true">All time</button></div></div>
+ <div class="bar" id="t-bar"></div>
+ <div class="legend" id="t-legend"></div>
+</section>
 <main>
  <a class="app" href="./Numina/" style="--glow:#00e5ff">
   <div class="top"><img src="numina-icon.png" alt=""><div><h2>Numina</h2><div class="tag">Everyday math</div></div></div>
   <p class="d">Math you can see, from counting to algebra, with interactive labs tied to real life.</p>
+  <span class="mins" data-app="numina"></span>
   <span class="go">Open Numina →</span>
  </a>
  <a class="app" href="./Anima/" style="--glow:#c9a2ff">
   <div class="top"><img src="anima-icon.png" alt=""><div><h2>Anima</h2><div class="tag">Psychology</div></div></div>
   <p class="d">Psychology and clinical thinking, with case work, an effects library and hands-on labs.</p>
+  <span class="mins" data-app="anima"></span>
   <span class="go">Open Anima →</span>
  </a>
  <a class="app" id="psygma" href="./Psygma/" style="--glow:#ffb21e">
   <div class="top"><img src="sigmind-icon.png" alt=""><div><h2>Psygma</h2><div class="tag">Statistics</div></div></div>
   <p class="d">Statistics from zero, built for reading and judging research.</p>
+  <span class="mins" data-app="psygma"></span>
   <span class="go">Open Psygma →</span>
  </a>
 </main>
 <footer>oscarvelz.github.io</footer>
 <script>if("serviceWorker"in navigator)navigator.serviceWorker.register("./sw.js",{scope:"./"});</script>
 <script>fetch("./Psygma/manifest.webmanifest",{method:"HEAD",cache:"no-store"}).then(r=>{if(!r.ok)throw 0}).catch(()=>{document.getElementById("psygma").href="./Sigmind/"});</script>
+<script>
+(function(){
+var APPS=[["numina","Numina","#00e5ff"],["anima","Anima","#c9a2ff"],["psygma","Psygma","#ffb21e"]];
+var URL_="https://etyimgbooxvqejkjhfyo.supabase.co",KEY="sb_publishable_PhzsifRX21bl1JX_1NXMCA_0kB-q6xB";
+var period="all",data={};
+function j(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
+function merge(a,b){var o={devices:{}};[a,b].forEach(function(x){if(!x||!x.devices)return;for(var d in x.devices){var days=(x.devices[d]||{}).days||{};var t=o.devices[d]||(o.devices[d]={days:{}});for(var k in days){var v=+days[k]||0;if(!(t.days[k]>=v))t.days[k]=v}}});return o}
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function inPeriod(k){if(period==="all")return true;var now=new Date();if(period==="today")return k===ymd(now);var m=new Date(now);m.setDate(now.getDate()-((now.getDay()+6)%7));return k>=ymd(m)&&k<=ymd(now)}
+function secs(x){var s=0;if(!x)return 0;for(var d in x.devices){var days=x.devices[d].days;for(var k in days)if(inPeriod(k))s+=+days[k]||0}return s}
+function fmt(s){var m=Math.floor(s/60),h=Math.floor(m/60);m%=60;return h?h+" h "+(m?m+" min":""):(m||(s>0?"<1":0))+" min"}
+function render(){var tot=0,per=APPS.map(function(a){var v=secs(data[a[0]]);tot+=v;return v});
+document.getElementById("t-total").textContent=fmt(tot);
+document.getElementById("t-bar").innerHTML=APPS.map(function(a,i){return '<i style="background:'+a[2]+';width:'+(tot?per[i]/tot*100:0)+'%"></i>'}).join("");
+document.getElementById("t-legend").innerHTML=APPS.map(function(a,i){return '<div><b style="background:'+a[2]+'"></b>'+a[1]+'<span>'+fmt(per[i])+'</span></div>'}).join("");
+APPS.forEach(function(a,i){var el=document.querySelector('.mins[data-app="'+a[0]+'"]');if(el)el.textContent=per[i]?fmt(per[i])+(period==="all"?" studied":period==="today"?" today":" this week"):""});
+document.querySelectorAll(".seg button").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.p===period)})}
+function loadLocal(){APPS.forEach(function(a){data[a[0]]=merge(data[a[0]],j("studytime."+a[0]))})}
+function token(){var best=null;try{for(var i=0;i<localStorage.length;i++){var v=j(localStorage.key(i));if(v&&typeof v==="object"){var s=v.currentSession||v.session||v;if(s&&s.access_token){var exp=s.expires_at>1e12?s.expires_at:(s.expires_at||0)*1000;if(exp>Date.now()+30000&&(!best||exp>best.exp))best={t:s.access_token,exp:exp}}}}}catch(e){}return best&&best.t}
+function loadCloud(){var t=token();if(!t)return;document.getElementById("t-note").textContent="Across Numina, Anima and Psygma · synced";
+fetch(URL_+"/auth/v1/user",{headers:{apikey:KEY,Authorization:"Bearer "+t}}).then(function(r){return r.ok?r.json():null}).then(function(u){if(!u)return;var md=u.user_metadata||{};APPS.forEach(function(a){var c=md[a[0]+"_studytime"];if(typeof c==="string"){try{c=JSON.parse(c)}catch(e){c=null}}data[a[0]]=merge(data[a[0]],c)});render()}).catch(function(){})}
+document.querySelectorAll(".seg button").forEach(function(b){b.onclick=function(){period=b.dataset.p;render()}});
+loadLocal();render();loadCloud();
+document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"){data={};loadLocal();render();loadCloud()}});
+})();
+</script>
 </body>
 </html>
