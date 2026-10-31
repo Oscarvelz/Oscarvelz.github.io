@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Oscar Velasquez · Apps</title>
+<meta name="description" content="Learning apps by Oscar Velasquez: Numina, Anima and Sigmind.">
+<meta name="theme-color" content="#0b0d12">
+<link rel="icon" href="numina-icon.png">
+<style>
+:root{--bg:#0b0d12;--ink:#eef0f5;--mute:#9aa2b4;--line:rgba(255,255,255,.09);--card:rgba(255,255,255,.035)}
+*{box-sizing:border-box;margin:0}
+html,body{background:var(--bg);color:var(--ink);font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100%}
+body{display:flex;flex-direction:column;align-items:center;padding:clamp(40px,9vh,110px) 20px 48px;
+ background:radial-gradient(900px 500px at 15% -10%,rgba(0,229,255,.10),transparent 60%),radial-gradient(800px 500px at 100% 0%,rgba(255,178,30,.08),transparent 60%),var(--bg)}
+header{text-align:center;max-width:640px;margin-bottom:clamp(28px,5vh,56px)}
+.k{letter-spacing:.32em;text-transform:uppercase;font-size:.72rem;color:var(--mute)}
+h1{font:600 clamp(2.1rem,6vw,3.4rem)/1.08 Georgia,"Iowan Old Style","Times New Roman",serif;margin:.5rem 0 .7rem;letter-spacing:-.01em}
+p.l{color:var(--mute);font-size:1.02rem}
+main{display:grid;gap:18px;width:100%;max-width:1040px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+a.app{display:flex;flex-direction:column;gap:14px;padding:22px;border:1px solid var(--line);border-radius:20px;background:var(--card);color:inherit;text-decoration:none;
+ transition:transform .25s ease,border-color .25s ease,background .25s ease;position:relative;overflow:hidden}
+a.app::after{content:"";position:absolute;inset:auto -40% -60% auto;width:220px;height:220px;border-radius:50%;background:var(--glow);opacity:.14;filter:blur(40px);transition:opacity .3s}
+a.app:hover,a.app:focus-visible{transform:translateY(-3px);border-color:color-mix(in srgb,var(--glow) 55%,transparent);background:rgba(255,255,255,.055);outline:none}
+a.app:hover::after,a.app:focus-visible::after{opacity:.3}
+.top{display:flex;align-items:center;gap:14px}
+img{width:56px;height:56px;border-radius:14px;object-fit:cover;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+h2{font:600 1.35rem/1.2 Georgia,"Times New Roman",serif}
+.tag{font-size:.75rem;color:var(--mute);letter-spacing:.06em}
+.d{color:#c9cedb;font-size:.95rem}
+.go{margin-top:auto;font-size:.85rem;color:var(--glow);letter-spacing:.04em}
+footer{margin-top:48px;color:var(--mute);font-size:.8rem}
+@media (prefers-reduced-motion:reduce){a.app{transition:none}a.app:hover{transform:none}}
+</style>
+</head>
+<body>
+<header>
+ <div class="k">Oscar Velasquez</div>
+ <h1>Apps for learning by seeing</h1>
+ <p class="l">Small, visual tools I build to understand math, psychology and statistics.</p>
+</header>
+<main>
+ <a class="app" href="./Numina/" style="--glow:#00e5ff">
+  <div class="top"><img src="numina-icon.png" alt=""><div><h2>Numina</h2><div class="tag">Everyday math</div></div></div>
+  <p class="d">Math you can see, from counting to algebra, with interactive labs tied to real life.</p>
+  <span class="go">Open Numina →</span>
+ </a>
+ <a class="app" href="./Anima/" style="--glow:#c9a2ff">
+  <div class="top"><img src="anima-icon.png" alt=""><div><h2>Anima</h2><div class="tag">Psychology</div></div></div>
+  <p class="d">Psychology and clinical thinking, with case work, an effects library and hands-on labs.</p>
+  <span class="go">Open Anima →</span>
+ </a>
+ <a class="app" href="./Sigmind/" style="--glow:#ffb21e">
+  <div class="top"><img src="sigmind-icon.png" alt=""><div><h2>Sigmind</h2><div class="tag">Statistics</div></div></div>
+  <p class="d">Statistics from zero, built for reading and judging research.</p>
+  <span class="go">Open Sigmind →</span>
+ </a>
+</main>
+<footer>oscarvelz.github.io</footer>
+</body>
+</html>
