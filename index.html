@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Oscar Velasquez · Apps</title>
-<meta name="description" content="Learning apps by Oscar Velasquez: Numina, Anima and Sigmind.">
+<meta name="description" content="Learning apps by Oscar Velasquez: Numina, Anima and Psygma.">
 <meta name="theme-color" content="#0b0d12">
 <link rel="icon" href="icon2-192.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -52,13 +52,14 @@ footer{margin-top:48px;color:var(--mute);font-size:.8rem}
   <p class="d">Psychology and clinical thinking, with case work, an effects library and hands-on labs.</p>
   <span class="go">Open Anima →</span>
  </a>
- <a class="app" href="./Sigmind/" style="--glow:#ffb21e">
-  <div class="top"><img src="sigmind-icon.png" alt=""><div><h2>Sigmind</h2><div class="tag">Statistics</div></div></div>
+ <a class="app" id="psygma" href="./Psygma/" style="--glow:#ffb21e">
+  <div class="top"><img src="sigmind-icon.png" alt=""><div><h2>Psygma</h2><div class="tag">Statistics</div></div></div>
   <p class="d">Statistics from zero, built for reading and judging research.</p>
-  <span class="go">Open Sigmind →</span>
+  <span class="go">Open Psygma →</span>
  </a>
 </main>
 <footer>oscarvelz.github.io</footer>
 <script>if("serviceWorker"in navigator)navigator.serviceWorker.register("./sw.js",{scope:"./"});</script>
+<script>fetch("./Psygma/manifest.webmanifest",{method:"HEAD",cache:"no-store"}).then(r=>{if(!r.ok)throw 0}).catch(()=>{document.getElementById("psygma").href="./Sigmind/"});</script>
 </body>
 </html>
