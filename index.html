@@ -67,12 +67,62 @@ h2{font:600 1.35rem/1.2 Georgia,"Times New Roman",serif}
 @media (prefers-reduced-motion:reduce){.more,.chev{transition:none}}
 footer{margin-top:48px;color:var(--mute);font-size:.8rem}
 @media (prefers-reduced-motion:reduce){a.app{transition:none}a.app:hover{transform:none}}
+
+/* ===== lively layer ===== */
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+body{position:relative;isolation:isolate}
+.aur{position:fixed;z-index:-2;pointer-events:none;border-radius:50%;filter:blur(80px);opacity:.15;will-change:transform}
+.aur.a1{width:60vmax;height:60vmax;left:-20vmax;top:-25vmax;background:#00e5ff;animation:drift1 38s ease-in-out infinite alternate}
+.aur.a2{width:55vmax;height:55vmax;right:-25vmax;top:10vh;background:#c9a2ff;opacity:.12;animation:drift2 46s ease-in-out infinite alternate}
+.aur.a3{width:50vmax;height:50vmax;left:10vw;bottom:-30vmax;background:#ffb21e;opacity:.10;animation:drift3 52s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(18vmax,14vmax) scale(1.15)}}
+@keyframes drift2{to{transform:translate(-16vmax,22vmax) scale(.9)}}
+@keyframes drift3{to{transform:translate(14vmax,-18vmax) scale(1.1)}}
+/* the sun that orbits inside each card */
+a.app::after{inset:auto;left:0;top:0;width:260px;height:260px;margin:-130px 0 0 -130px;opacity:.26;filter:blur(46px);
+ background:radial-gradient(circle,var(--glow) 0%,color-mix(in srgb,var(--glow) 45%,transparent) 35%,transparent 70%);
+ animation:sun var(--dur,16s) linear infinite;animation-delay:var(--delay,0s);will-change:left,top,opacity}
+@keyframes sun{
+ 0%{left:100%;top:100%;opacity:.32;transform:scale(1)}
+ 25%{left:8%;top:96%;opacity:.18;transform:scale(.85)}
+ 50%{left:4%;top:6%;opacity:.24;transform:scale(1.1)}
+ 75%{left:96%;top:4%;opacity:.18;transform:scale(.9)}
+ 100%{left:100%;top:100%;opacity:.32;transform:scale(1)}}
+/* light that runs along the border */
+a.app::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+ background:conic-gradient(from var(--ang,0deg),transparent 0 70%,color-mix(in srgb,var(--glow) 85%,#fff) 80%,transparent 90%);
+ -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+ animation:spin var(--dur,16s) linear infinite;animation-delay:var(--delay,0s);opacity:.75}
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes spin{to{--ang:360deg}}
+a.app>*{position:relative;z-index:1}
+/* icon breathing + shine */
+.top .ic{animation:breathe 6s ease-in-out infinite;animation-delay:var(--delay,0s)}
+@keyframes breathe{0%,100%{transform:translateY(0);box-shadow:0 6px 20px rgba(0,0,0,.35),0 0 0 color-mix(in srgb,var(--glow) 0%,transparent)}
+ 50%{transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.4),0 0 22px color-mix(in srgb,var(--glow) 45%,transparent)}}
+.top{position:relative}
+.top .ic{position:relative;flex:none;border-radius:14px;overflow:hidden;display:block;line-height:0}
+.top .ic::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.45) 50%,transparent 65%);transform:translateX(-120%);animation:shine 7s ease-in-out infinite;animation-delay:calc(var(--delay,0s) + 2s)}
+@keyframes shine{0%,70%{transform:translateX(-120%)}85%,100%{transform:translateX(120%)}}
+/* entrance */
+header,.time,a.app{animation:rise .8s cubic-bezier(.2,.7,.2,1) backwards}
+.time{animation-delay:.12s}
+a.app:nth-child(1){animation:rise .8s .2s cubic-bezier(.2,.7,.2,1) backwards}
+a.app:nth-child(2){animation:rise .8s .3s cubic-bezier(.2,.7,.2,1) backwards}
+a.app:nth-child(3){animation:rise .8s .4s cubic-bezier(.2,.7,.2,1) backwards}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+h1 .shim{background:linear-gradient(90deg,#eef0f5 0%,#eef0f5 40%,#9fefff 47%,#e4d2ff 50%,#ffd58a 53%,#eef0f5 60%,#eef0f5 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shim 9s ease-in-out infinite}
+@keyframes shim{0%{background-position:100% 0}60%,100%{background-position:0 0}}
+.bar i,.t-thin i{background-size:200% 100% !important}
+.paused *,.paused *::before,.paused *::after,.paused .aur{animation-play-state:paused !important}
+@media (prefers-reduced-motion:reduce){.aur,a.app::after,a.app::before,.top .ic,.top .ic::after,h1 .shim,header,.time,a.app{animation:none !important}#sky{display:none}}
 </style>
 </head>
 <body>
+<div class="aur a1"></div><div class="aur a2"></div><div class="aur a3"></div><canvas id="sky" aria-hidden="true"></canvas>
 <header>
  <div class="k">Oscar Velasquez</div>
- <h1>Apps for learning by seeing</h1>
+ <h1><span class="shim">Apps for learning by seeing</span></h1>
  <p class="l">Small, visual tools I build to understand math, psychology and statistics.</p>
 </header>
 <section class="time" id="t-sec" aria-label="Study time">
@@ -88,20 +138,20 @@ footer{margin-top:48px;color:var(--mute);font-size:.8rem}
  </div></div>
 </section>
 <main>
- <a class="app" href="./Numina/" style="--glow:#00e5ff">
-  <div class="top"><img src="numina-icon.png" alt=""><div><h2>Numina</h2><div class="tag">Everyday math</div></div></div>
+ <a class="app" href="./Numina/" style="--glow:#00e5ff;--dur:17s;--delay:0s">
+  <div class="top"><span class="ic"><img src="numina-icon.png" alt=""></span><div><h2>Numina</h2><div class="tag">Everyday math</div></div></div>
   <p class="d">Math you can see, from counting to algebra, with interactive labs tied to real life.</p>
   <span class="mins" data-app="numina"></span>
   <span class="go">Open Numina →</span>
  </a>
- <a class="app" href="./Anima/" style="--glow:#c9a2ff">
-  <div class="top"><img src="anima-icon.png" alt=""><div><h2>Anima</h2><div class="tag">Psychology</div></div></div>
+ <a class="app" href="./Anima/" style="--glow:#c9a2ff;--dur:19s;--delay:-6s">
+  <div class="top"><span class="ic"><img src="anima-icon.png" alt=""></span><div><h2>Anima</h2><div class="tag">Psychology</div></div></div>
   <p class="d">Psychology and clinical thinking, with case work, an effects library and hands-on labs.</p>
   <span class="mins" data-app="anima"></span>
   <span class="go">Open Anima →</span>
  </a>
- <a class="app" id="psygma" href="./Psygma/" style="--glow:#ffb21e">
-  <div class="top"><img src="sigmind-icon.png" alt=""><div><h2>Psygma</h2><div class="tag">Statistics</div></div></div>
+ <a class="app" id="psygma" href="./Psygma/" style="--glow:#ffb21e;--dur:21s;--delay:-12s">
+  <div class="top"><span class="ic"><img src="sigmind-icon.png" alt=""></span><div><h2>Psygma</h2><div class="tag">Statistics</div></div></div>
   <p class="d">Statistics from zero, built for reading and judging research.</p>
   <span class="mins" data-app="psygma"></span>
   <span class="go">Open Psygma →</span>
@@ -141,6 +191,21 @@ fetch(URL_+"/auth/v1/user",{headers:{apikey:KEY,Authorization:"Bearer "+t}}).the
 document.querySelectorAll(".seg button").forEach(function(b){b.onclick=function(){period=b.dataset.p;render()}});
 loadLocal();render();loadCloud();
 document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"){data={};loadLocal();render();loadCloud()}});
+})();
+</script>
+<script>
+(function(){
+var rm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+document.addEventListener("visibilitychange",function(){document.body.classList.toggle("paused",document.hidden)});
+if(rm)return;var c=document.getElementById("sky"),x=c.getContext("2d"),W,H,dpr=Math.min(devicePixelRatio||1,2),P=[],cols=["0,229,255","201,162,255","255,178,30","255,255,255"];
+function size(){W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0)}
+size();addEventListener("resize",size);
+var N=Math.round(Math.min(70,W*H/14000));
+for(var i=0;i<N;i++)P.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.6+.4,vy:-(Math.random()*.18+.04),vx:(Math.random()-.5)*.08,a:Math.random()*Math.PI*2,c:cols[i%4]});
+var last=0;function f(t){requestAnimationFrame(f);if(document.hidden||t-last<33)return;last=t;x.clearRect(0,0,W,H);
+for(var i=0;i<P.length;i++){var p=P[i];p.x+=p.vx;p.y+=p.vy;p.a+=.02;if(p.y<-5){p.y=H+5;p.x=Math.random()*W}
+var al=.25+.35*(.5+.5*Math.sin(p.a));x.beginPath();x.fillStyle="rgba("+p.c+","+al+")";x.shadowColor="rgba("+p.c+",.9)";x.shadowBlur=6;x.arc(p.x,p.y,p.r,0,6.283);x.fill()}}
+requestAnimationFrame(f);
 })();
 </script>
 </body>
