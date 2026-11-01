@@ -413,10 +413,11 @@ const AI = {
     if (this._loading) return this._loading;
     this._loading = (async () => {
       try {
-        if (!navigator.gpu) toast('This browser has no WebGPU, so the AI may not run. Use an up-to-date Chrome.', 6000);
+        if (!(await this.cached())) await this.download();
+        let adapter = null; try { adapter = await navigator.gpu?.requestAdapter(); } catch {}
+        if (!adapter) throw new Error('This browser can\u2019t reach the graphics chip (WebGPU), which the AI needs. Update Chrome, and check chrome://gpu shows WebGPU as enabled.');
         this.setPill('busy', 'Starting AI…');
         await this.runtime();
-        if (!(await this.cached())) await this.download();
         this.setPill('busy', 'Loading AI…');
         this.emb = await this.mp.UniversalEmbedder.createFromOptions(this.fileset, { baseOptions: { modelAssetBuffer: await this.stream() }, l2Normalize: true });
         this.setPill('ok', 'AI ready');
