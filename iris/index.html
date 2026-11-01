@@ -359,20 +359,55 @@ const AI = {
     if (!this.mp) this.mp = await import(RT + '/retrieval_bundle.mjs');
     if (!this.fileset) this.fileset = await this.mp.FilesetResolver.forRetrievalTasks(RT + '/wasm');
   },
-  async cached() { try { const c = await caches.open('iris-model'); return !!(await c.match(MODEL_URL)); } catch { return false; } },
+  PART: 16 * 1024 * 1024,
+  key(i) { return MODEL_URL + '#part' + i; },
+  async manifest() { try { const c = await caches.open('iris-model'); const r = await c.match(MODEL_URL + '#manifest'); return r ? await r.json() : null; } catch { return null; } },
+  async cached() { return !!(await this.manifest()) || !!this.blob; },
+  async putPart(c, i, buf) { try { await c.put(this.key(i), new Response(buf, { headers: { 'content-type': 'application/octet-stream' } })); } catch (e) { throw new Error('Your browser refused to save the model (' + e.message + '). Check free storage and that this isn\u2019t an incognito tab.'); } },
   async download() {
+    if (await this.cached()) return;
     const c = await caches.open('iris-model');
-    if (await c.match(MODEL_URL)) return;
     try { const est = await navigator.storage.estimate(); if (est.quota && est.quota - est.usage < MODEL_MB * 1.3e6) toast('Storage is tight. Free up some space if the download fails.', 5000); } catch {}
     try { await navigator.storage.persist?.(); } catch {}
     this.setPill('busy', 'Downloading AI 0%');
-    const res = await fetch(MODEL_URL);
-    if (!res.ok) throw new Error('Download failed (' + res.status + ')');
-    const total = +res.headers.get('content-length') || MODEL_MB * 1e6; let got = 0; let last = 0;
-    const counted = res.body.pipeThrough(new TransformStream({ transform(chunk, ctl) { got += chunk.byteLength; const p = Math.floor(got / total * 100); if (p !== last) { last = p; AI.setPill('busy', `Downloading AI ${p}%`); UI.onModelProgress?.(p, got, total); } ctl.enqueue(chunk); } }));
-    await c.put(MODEL_URL, new Response(counted, { headers: { 'content-type': 'application/octet-stream', 'content-length': String(total) } }));
+    const getPart = async (i, total) => {
+      const a = i * this.PART, b = total ? Math.min(total, a + this.PART) - 1 : a + this.PART - 1;
+      let lastErr;
+      for (let t = 0; t < 5; t++) {
+        try { const r = await fetch(MODEL_URL, { headers: { Range: `bytes=${a}-${b}` }, cache: 'no-store' }); if (r.status !== 206 && r.status !== 200) throw new Error('HTTP ' + r.status); return r; }
+        catch (e) { lastErr = e; await sleep(1000 * (t + 1) ** 2); }
+      }
+      throw new Error('Network problem while downloading (' + (lastErr?.message || 'unknown') + '). Tap the status to resume.');
+    };
+    // first part tells us the total size and whether ranges work
+    const first = await getPart(0, 0);
+    if (first.status === 200) { // no range support: whole file in one go
+      const total = +first.headers.get('content-length') || MODEL_MB * 1e6; const reader = first.body.getReader(); const chunks = []; let got = 0;
+      for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); got += value.byteLength; const p = Math.floor(got / total * 100); this.setPill('busy', `Downloading AI ${p}%`); UI.onModelProgress?.(p, got, total); }
+      this.blob = new Blob(chunks); let n = 0;
+      try { for (let a = 0; a < this.blob.size; a += this.PART, n++) await this.putPart(c, n, await this.blob.slice(a, a + this.PART).arrayBuffer()); await c.put(MODEL_URL + '#manifest', new Response(JSON.stringify({ total: this.blob.size, parts: n }))); this.blob = null; } catch (e) { console.warn('model kept in memory only', e); toast('Model works now but couldn\u2019t be saved, so it will download again next time.', 6000); }
+      return;
+    }
+    const total = +((first.headers.get('content-range') || '').split('/')[1]) || MODEL_MB * 1e6; const parts = Math.ceil(total / this.PART);
+    let got = 0; const tick = () => { const p = Math.floor(got / total * 100); this.setPill('busy', `Downloading AI ${p}%`); UI.onModelProgress?.(p, got, total); };
+    for (let i = 0; i < parts; i++) {
+      if (await c.match(this.key(i))) { got += Math.min(this.PART, total - i * this.PART); tick(); continue; } // resume
+      let buf; for (let t = 0; t < 3 && !buf; t++) { try { const r = i === 0 ? first : await getPart(i, total); buf = await r.arrayBuffer(); } catch (e) { if (t === 2) throw e; await sleep(1500); } }
+      await this.putPart(c, i, buf); got += buf.byteLength; tick();
+    }
+    await c.put(MODEL_URL + '#manifest', new Response(JSON.stringify({ total, parts })));
   },
-  async fromFile(file) { const c = await caches.open('iris-model'); this.setPill('busy', 'Saving model…'); await c.put(MODEL_URL, new Response(file)); await this.load(); },
+  async stream() {
+    if (this.blob) return this.blob.stream().getReader();
+    const m = await this.manifest(); if (!m) throw new Error('Model not downloaded'); const c = await caches.open('iris-model'); let i = 0; const self = this;
+    return new ReadableStream({ async pull(ctl) { if (i >= m.parts) return ctl.close(); const r = await c.match(self.key(i)); if (!r) { await caches.open('iris-model').then((cc) => cc.delete(MODEL_URL + '#manifest')); ctl.error(new Error('Part of the model is missing. Download it again.')); return; } ctl.enqueue(new Uint8Array(await r.arrayBuffer())); i++; } }).getReader();
+  },
+  async fromFile(file) {
+    this.setPill('busy', 'Saving model…'); const c = await caches.open('iris-model'); let n = 0;
+    try { for (let a = 0; a < file.size; a += this.PART, n++) await this.putPart(c, n, await file.slice(a, a + this.PART).arrayBuffer()); await c.put(MODEL_URL + '#manifest', new Response(JSON.stringify({ total: file.size, parts: n }))); }
+    catch (e) { this.blob = file; toast('Using the file without saving it.', 4000); }
+    this.emb = null; this._loading = null; await this.load();
+  },
   async load() {
     if (this.emb) return this.emb;
     if (this._loading) return this._loading;
@@ -381,10 +416,9 @@ const AI = {
         if (!navigator.gpu) toast('This browser has no WebGPU, so the AI may not run. Use an up-to-date Chrome.', 6000);
         this.setPill('busy', 'Starting AI…');
         await this.runtime();
-        const c = await caches.open('iris-model'); let r = await c.match(MODEL_URL);
-        if (!r) { await this.download(); r = await c.match(MODEL_URL); }
+        if (!(await this.cached())) await this.download();
         this.setPill('busy', 'Loading AI…');
-        this.emb = await this.mp.UniversalEmbedder.createFromOptions(this.fileset, { baseOptions: { modelAssetBuffer: r.body.getReader() }, l2Normalize: true });
+        this.emb = await this.mp.UniversalEmbedder.createFromOptions(this.fileset, { baseOptions: { modelAssetBuffer: await this.stream() }, l2Normalize: true });
         this.setPill('ok', 'AI ready');
         await DB.put('kv', 'modelOk', true);
         UI.onModelReady();
@@ -524,7 +558,7 @@ const Indexer = {
   async start() {
     if (this.running) { UI.renderIndex(); return; }
     if (!this.queue.length) { UI.indexStatus(''); UI.refreshAll(); return; }
-    try { await AI.load(); } catch (e) { UI.renderIndex(); return; }
+    if (!(await ensureAI())) { UI.renderIndex(); toast(`${this.queue.length} photos are waiting for the AI.`); return; }
     this.running = true; this.paused = false; this.done = 0; this.total = this.queue.length; this.skipped = 0; this.t0 = performance.now();
     try { this.wake = await navigator.wakeLock?.request('screen'); } catch {}
     UI.renderIndex();
