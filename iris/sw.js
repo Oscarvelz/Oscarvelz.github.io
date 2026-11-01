@@ -1,6 +1,6 @@
 // Iris service worker: app shell + MediaPipe runtime cached for offline use.
 // The AI model itself is cached by the app in the 'iris-model' cache.
-const VERSION = 'iris-v4';
+const VERSION = 'iris-v5';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png'];
 
 self.addEventListener('install', (e) => {
@@ -32,7 +32,7 @@ self.addEventListener('fetch', (e) => {
   }
   if (url.origin === location.origin) {
     // Network-first for the page so updates arrive; fall back to cache offline.
-    e.respondWith(fetch(e.request).then((res) => {
+    e.respondWith(fetch(e.request, { cache: 'no-cache' }).then((res) => {
       if (res.ok) caches.open(VERSION).then((c) => c.put(e.request, res.clone()));
       return res;
     }).catch(() => caches.match(e.request).then((r) => r || caches.match('./index.html'))));
